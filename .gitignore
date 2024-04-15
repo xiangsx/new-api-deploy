@@ -1,0 +1,6 @@
+/run
+/monitor
+/mysql/data
+/redis/data
+/oneapi/data
+*.log

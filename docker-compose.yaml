@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/conf:/etc/mysql/conf.d
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      - /etc/localtime:/etc/localtime:ro
+    # ports:
+      # - "9003:3306"
+    restart: always
+    env_file:
+      - './env/.env'
+      - './env/mysql.env'
+    command: --max_connections=1000
+
+  redis:
+    image: redis:latest
+    restart: always
+    # ports:
+      # - "9002:6379"
+    volumes:
+      - ./redis/data:/data
+      - ./redis/redis.conf:/data/redis.conf
+      - /etc/localtime:/etc/localtime:ro
+    command: redis-server /data/redis.conf
+    env_file:
+      - './env/.env'
+    
+  monitor:
+    image: louislam/uptime-kuma:latest
+    restart: always
+    volumes:
+      - ./monitor/uptime-kuma:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9001:3001"
+    env_file:
+      - './env/.env'
+
+  newapi:
+    image: calciumion/new-api:latest
+    ports:
+      - "9000:3000"
+    restart: always
+    depends_on:
+      - mysql
+    volumes:
+      - ./newapi/data:/data
+      - ./newapi/log:/var
+    env_file:
+      - './env/.env'
+      - './env/newapi.env'
+    security_opt:
+      - seccomp:unconfined
+    command: ["--log-dir", "/var/"]
